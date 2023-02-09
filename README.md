@@ -6,12 +6,11 @@ For this study, we used environmental DNA metabarcoding and measurements of micr
 
 The data used in this study is available online:  
 - Raw sequences from ITS and trnL amplification are deposited at https://doi.org/10.5281/zenodo.6620359  
-- Filtered data is deposited at https://datadryad.org/stash/share/ACsdND52MV8uRoytvjz0OjTTFNRYYMG5as6yQGnW6x4
-- Environmental variables are deposited at TBD.
+- Filtered data for fungi is deposited at https://datadryad.org/stash/share/ACsdND52MV8uRoytvjz0OjTTFNRYYMG5as6yQGnW6x4
+- Environmental table is deposited at [XXX/env.myco.09.02.23.csv].
 
 The scripts are ordered in this way:
 - `import.R` (for accessing the data)
-- `manipulation.R` (for processing the data)
 - `modeling.R` (for modeling)
 - `figure.R` (for the figures)
 
