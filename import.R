@@ -153,8 +153,8 @@ fung <- readRDS("data/fung.phy.relax.rds")
 fung.ecm = subset_taxa(fung, genus_name == "Inocybe"|genus_name == "Austropaxillus"|genus_name =="Cantharellus"|   genus_name =="Cenococcum"|genus_name =="Clavulina"|family_name =="Cortinariaceae"|family_name =="Gomphidiaceae"|genus_name =="Helvella"|genus_name =="Lactarius"|genus_name =="Leucophleps"|genus_name =="Rhizopogon"|genus_name =="Russula"|family_name =="Sebacinaceae"|genus_name =="Suillus"|family_name =="Tuberaceae")
 ## Calculate diversity
 sample_names(fung.ecm) <- paste(sample_data(fung.ecm)$Glacier, sample_data(fung.ecm)$Year, sample_data(fung.ecm)$Spot, sep = "_")
-sample_data(fung.ecm)$unikPlot <- substr(sample_names(fung.ecm), start = 1, stop = 12)
-fung.ecm = merge_samples(fung.ecm, "unikPlot")
+sample_data(fung.ecm)$uniqPlot <- substr(sample_names(fung.ecm), start = 1, stop = 12)
+fung.ecm = merge_samples(fung.ecm, "uniqPlot")
 fung.ecm.div <- estimate_richness(fung.ecm, measures = c("Observed", "Shannon")) %>% 
   rownames_to_column() %>% 
   separate(col = rowname, into = c("Glacier", "Year", "Plot"), sep = "_", remove = T) %>% 
@@ -165,8 +165,8 @@ fung <- readRDS("data/fung.phy.relax.rds")
 fung.am = subset_taxa(fung, family_name == "Acaulosporaceae"|family_name == "Archaeosporaceae"|order_name == "Archaeosporales"|family_name == "Diversisporaceae"|order_name == "Diversisporales"|family_name == "Glomeraceae"|order_name == "Glomerales"|family_name == "Paraglomeraceae")
 ## Calculate diversity
 sample_names(fung.am) <- paste(sample_data(fung.am)$Glacier, sample_data(fung.am)$Year, sample_data(fung.am)$Spot, sep = "_")
-sample_data(fung.am)$unikPlot <- substr(sample_names(fung.am), start = 1, stop = 12)
-fung.am = merge_samples(fung.am, "unikPlot")
+sample_data(fung.am)$uniqPlot <- substr(sample_names(fung.am), start = 1, stop = 12)
+fung.am = merge_samples(fung.am, "uniqPlot")
 fung.am.div <- estimate_richness(fung.am, measures = c("Observed", "Shannon")) %>% 
   rownames_to_column() %>% 
   separate(col = rowname, into = c("Glacier", "Year", "Plot"), sep = "_", remove = T) %>%

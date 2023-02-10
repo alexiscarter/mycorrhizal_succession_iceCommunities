@@ -5,9 +5,9 @@ This repository contains the custom code and data to replicate the results publi
 For this study, we used environmental DNA metabarcoding and measurements of microhabitat characteristics to assess the evolution of mycorrhizal communities during soil development in 46 glacier forelands across the globe.
 
 The scripts are ordered in this way:
-- `import.R` (for accessing the data)
-- `modeling.R` (for modeling)
-- `figure.R` (for the figures)
+- `import.R` for accessing the data and doing the first manipulation.
+- `modeling.R` for modeling.
+- `figure.R` for the figures.
 
 Files available in the `data` folder:
 - `data_filtered_Fung02.zip` Filtered sequence data from Fung02 marker in compressed format.
@@ -19,7 +19,7 @@ Files available in the `data` folder:
 
 Raw sequences from ITS and trnL amplification are deposited at https://doi.org/10.5281/zenodo.6620359  
 
-Please cite original data if you used them as: Alessia Guerrieri, Aurélie Bonin, Ludovic Gielly, & Gentile Francesco Ficetola. (2022). Raw sequencing data for studying the colonization of soil communities after glacier retreat [Data set]. Zenodo. https://doi.org/10.5281/zenodo.6620359  
+If you used any of the data, please cite as: Alessia Guerrieri, Aurélie Bonin, Ludovic Gielly, & Gentile Francesco Ficetola. (2022). Raw sequencing data for studying the colonization of soil communities after glacier retreat [Data set]. Zenodo. https://doi.org/10.5281/zenodo.6620359  
 
 Related article: TBA
 

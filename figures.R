@@ -10,7 +10,7 @@ library(RColorBrewer)
 qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
 col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
 
-## Plot diversity
+## Plot diversity ####
 ## All fungi
 ggplot(data = full.table, aes(x=exp(time.log)+0.0000001, y=fung.q0))+ # +0.0000001 is to avoid small misplacement of the bins
   geom_hex(bins = 12) +
@@ -146,9 +146,46 @@ ggplot(data = full.table, aes(x=exp(time.log)+0.0000001, y=diff.sh))+ # +0.00000
   theme(panel.background = element_blank(), axis.line = element_line(colour = "black",size = .8), axis.ticks = element_line(colour = "black"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         axis.text = element_text(family = 'Helvetica', colour = "black"), text = element_text(family = 'Helvetica', colour = "black"), plot.title = element_text(hjust=0.5))
 
+## GDM plot ####
+## remove variables with non-significant deviance
+imp.all$sig <- imp.all$deviance
+imp.all$sig[imp.all$pvalue > 0.05] <- 0 
 
-## Random Forest ####
+## order variables
+imp.all$variables <- ordered(imp.all$variables, levels = c("Geographic", "time.log.sc", "ndvi.s", "compo.axis1", "compo.axis2", "n.s", "ph.s", "p.s", "t.s", "twi.s"))
+
+## Keep only first axis of plant PCoA (the second is never significant)
+imp.all.plot <- imp.all %>% filter(!variables == 'compo.axis2')
+
+## EcM
+imp.all.plot %>% 
+  filter(marker == "EcM") %>% 
+  ggplot(aes(x=variables, y = deviance, fill = variables))+
+  geom_bar(stat="identity") +
+  scale_fill_manual(name = "Variables", values = c('#DDDDDD', '#FFAABB', '#BBCC33',  '#AAAA00', '#00a878', '#EE8866', '#EEDD88', '#99DDFF', '#77AADD'),
+                    labels = c("Geographic", "Time", "Productivity", "Plant community", "Nitrogen", "pH", "Phosphorus", "Temperature", "Moisture")) +
+  scale_x_discrete(labels = c("Geographic", "Time", "Productivity", "Plant community", "Nitrogen", "pH", "Phosphorus", "Temperature", "Moisture")) +
+  labs(x = 'Drivers of beta-diversity', y = 'Deviance explained (%)', title = 'EcM fungi') +
+  scale_y_continuous(expand = c(0.01, 0.01), limits = c(0,25), n.breaks = 6) + #, trans = "log10", limits = c(0,60)
+  theme_bw() + theme(panel.grid.major.x = element_blank(), axis.text.x = element_text(angle = -35, vjust = 0.5, hjust=0), plot.title = element_text(hjust = 0.5))
+
+## AM
+imp.all.plot %>% 
+  filter(marker == "AM") %>% 
+  ggplot(aes(x=variables, y = deviance, fill = variables))+
+  geom_bar(stat="identity") +
+  scale_fill_manual(name = "Variables", values = c('#DDDDDD', '#FFAABB', '#BBCC33',  '#AAAA00', '#00a878', '#EE8866', '#EEDD88', '#99DDFF', '#77AADD'),
+                    labels = c("Geographic", "Time", "Productivity", "Plant community", "Nitrogen", "pH", "Phosphorus", "Temperature", "Moisture")) +
+  scale_x_discrete(labels = c("Geographic", "Time", "Productivity", "Plant community", "Nitrogen", "pH", "Phosphorus", "Temperature", "Moisture")) +
+  labs(x = 'Drivers of beta-diversity', y = 'Deviance explained (%)', title = 'AM fungi') +
+  scale_y_continuous(expand = c(0.01, 0.01), limits = c(0,25), n.breaks = 6) + #, trans = "log10", limits = c(0,60)
+  theme_bw() + theme(panel.grid.major.x = element_blank(), axis.text.x = element_text(angle = -35, vjust = 0.5, hjust=0), plot.title = element_text(hjust = 0.5))
+
+## Random Forest models ####
 # package not working on my machine yet, ran on PC
+rf<- read.csv("data/rfpermute.csv")
+rf$variables <- ordered(rf$variables, levels = c("Glacier", "Time", "NDVI", "Plant diversity", "Nitrogen", "pH", "Phosphorus", "Temperature", "Wetness"))
+
 rf$variables <- ordered(rf$variables, levels = c("Glacier", "Time", "NDVI", "Plant diversity", "Nitrogen", "pH", "Phosphorus", "Temperature", "Wetness"))
 rf %>% 
   filter(myco == "AM") %>% 
@@ -172,4 +209,58 @@ rf %>%
   scale_y_continuous(expand = c(0.01, 0.01), limits = c(0,60), n.breaks = 6) + #, trans = "log10", limits = c(0,60)
   theme_bw() + theme(axis.text.x = element_text(angle = -45, vjust = 0.5, hjust=0) plot.title = element_text(hjust = 0.5))
 
-## PCoA plots
+## Maps ####
+library(rnaturalearth)
+#library(ggspatial)
+library(ggrepel)
+
+## All forelands
+sites_map <- full.table %>%
+  dplyr::filter(!is.na(lon)) %>%
+  dplyr::filter(!glacier %in% c("Pre de Bar", "Miage", "Lewis", "Kazbegi")) %>%
+  group_by(glacier) %>% 
+  summarise_all(mean)
+length(unique(sites_map$glacier))#46
+
+## Alps inlet
+sites_alps_map <- full.table %>%
+  select(glacier, lon, lat) %>%
+  dplyr::filter(!glacier %in% c("Pre de Bar", "Miage", "Lewis", "Kazbegi")) %>% 
+  dplyr::filter(lon > 0 & lon < 20 & lat > 44 & lat < 50) %>% 
+  dplyr::filter(!is.na(lon)) %>% 
+  group_by(glacier) %>% 
+  summarise_all(mean)
+
+sites_map_rest <- sites_map %>%
+  dplyr::filter(!glacier %in% sites_alps_map$glacier)
+
+world <- ne_countries(scale = "medium", returnclass = "sf")
+map_rest <- ggplot(data = world) +
+  geom_sf(color = "darkgrey", fill = "white") +
+  geom_point(data = sites_map_rest, mapping = aes(x = lon, y = lat), shape = 21, size = 2, alpha = .7, color = "black", fill = "red") +
+  geom_point(data = sites_alps_map, mapping = aes(x = lon, y = lat), shape = 21, size = 1, alpha = .3, color = "black", fill = "red") +
+  geom_rect(data=sites_map_rest, mapping=aes(xmin=5, xmax=15, ymin=44, ymax=48), color="#474747", alpha=0, size = .3) +
+  geom_segment(aes(x = 5, y = 44, xend = -19, yend = 0), color="#474747", size = .2) +
+  geom_segment(aes(x = 15, y = 44, xend = 120, yend = 0), color="#474747", size = .2) +
+  geom_label_repel(data = sites_map_rest, mapping = aes(x = lon, y = lat, label = glacier), seed = 3, 
+                   size = 3, label.padding = 0.20, force_pull = 0, force = 10,  
+                   segment.size = 0.3, max.overlaps = Inf, max.iter = 10000000, max.time = 30) +
+  coord_sf(ylim = c(-85, 87), expand = FALSE) + # Zoom in or out
+  labs(x = 'Longitude (°)', y = 'Latitude (°)') + # Label x and y axis
+  theme(panel.border = element_rect(colour = "black", fill=NA), panel.grid.major = element_blank(), panel.background = element_rect(fill = 'aliceblue'), text = element_text(size = 14))
+
+## Alps with glacier names simple for inlet
+alps_names <- ggplot(data = world) +
+  geom_sf(color = "darkgrey", fill = "white") +
+  geom_point(data = sites_alps_map, mapping = aes(x = lon, y = lat), shape = 21, size = 2, alpha = .7, color = "black", fill = "red") +
+  geom_label_repel(data = sites_alps_map, mapping = aes(x = lon, y = lat, label = glacier), 
+                   label.padding = 0.08,  size = 2.8, seed = 10, force = 30, force_pull = 0, segment.size = 0.3,
+                   max.overlaps = Inf, max.iter = 10000000, max.time = 30) +
+  coord_sf(xlim = c(0, 20), ylim = c(42, 50), expand = FALSE, clip = "on") + # Zoom in or out
+  theme(plot.margin = unit(c(0, 0, 0, 0), "null"), 
+        axis.title=element_blank(), axis.line = element_blank(), axis.ticks=element_blank(),  axis.text=element_blank(), 
+        panel.border = element_rect(colour = "black", fill=NA), panel.grid.major = element_blank(), panel.background = element_rect(fill = 'aliceblue'), text = element_text(size = 6))
+
+## World + Alps inlet
+map_rest + annotation_custom(ggplotGrob(alps_names), xmin = -20, xmax = 120, 
+                             ymin = -100, ymax = 20)
