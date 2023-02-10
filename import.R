@@ -5,11 +5,19 @@ library(phyloseq)   # Manipulation of metabarcoding data
 library(tidyverse)  # Plotting and data manipulation 
 library(stringi)
 
-## Load data
+## Files available
+list.files(path = "data/")
+#data_filtered_Fung02.zip Filtered sequence data from Fung02 marker in compressed format.
+#data_filtered_Sper01.zip Filtered sequence data from Sper01 marker in compressed format.
+#env.myco.09.02.23.csv Environmental data containing plot information, time since glacier retreat, soil chemistry (pH, C, N, P), temperature (meanT), productivity (NDVI), wetness (WTI) and plot coordinates. 
+#fung.phy.relax.rds Phyloseq object of the fungal data.
+#sper.phy.relax.rds Phyloseq object of the plant data.
+#full.table.09.02.23.csv Table containing calculated diversity values with corresponding and environmental values
 
-## Sequences
-fung <- read.csv(file = "data/data_filtered_Fung02.csv")
-sper <- read.csv(file = "data/data_filtered_Sper01.csv")
+## Load data
+## Sequences (from zipped files)
+fung <- read.csv(unz("data/data_filtered_Fung02.zip","data_filtered_Fung02.csv"))
+sper <- read.csv(unz("data/data_filtered_Sper01.zip","data_filtered_Sper01.csv"))
 
 # ## Sample labels
 # labels <- read.csv(file = "data/labels.csv")
@@ -177,7 +185,7 @@ full.table <- env.table %>%
   left_join(div.table, by = c("Glacier", "Year", "Plot"))
 #write.csv(full.table, "data/full.table.09.02.23.csv", row.names = F)
 
-# Transformation
+# Transformations
 full.table$sper.q0.s <- scale(full.table$sper.q0)
 full.table$sper.q1.s <- scale(full.table$sper.q1)
 full.table$sper.q1.l <- log(full.table$sper.q1)
