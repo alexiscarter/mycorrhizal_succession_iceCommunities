@@ -7,30 +7,17 @@ library(stringi)
 
 ## Files available
 list.files(path = "data/")
-#data_filtered_Fung02.zip Filtered sequence data from Fung02 marker in compressed format.
-#data_filtered_Sper01.zip Filtered sequence data from Sper01 marker in compressed format.
-#env.myco.09.02.23.csv Environmental data containing plot information, time since glacier retreat, soil chemistry (pH, C, N, P), temperature (meanT), productivity (NDVI), wetness (WTI) and plot coordinates. 
-#fung.phy.relax.rds Phyloseq object of the fungal data.
-#sper.phy.relax.rds Phyloseq object of the plant data.
-#full.table.09.02.23.csv Table containing calculated diversity values with corresponding and environmental values
+#data_filtered_Fung02.zip: Filtered sequence data from Fung02 marker in compressed format.
+#data_filtered_Sper01.zip: Filtered sequence data from Sper01 marker in compressed format.
+#env.myco.09.02.23.csv: Environmental data containing plot information, time since glacier retreat, soil chemistry (pH, C, N, P), temperature (meanT), productivity (NDVI), wetness (WTI) and plot coordinates. 
+#fung.phy.relax.rds: Phyloseq object of the fungal data (can be created using this script).
+#sper.phy.relax.rds: Phyloseq object of the plant data (can be created using this script).
+#full.table.09.02.23.csv: Table containing calculated diversity values with corresponding and environmental values (can be created using this script).
 
 ## Load data
 ## Sequences (from zipped files)
 fung <- read.csv(unz("data/data_filtered_Fung02.zip","data_filtered_Fung02.csv"))
 sper <- read.csv(unz("data/data_filtered_Sper01.zip","data_filtered_Sper01.csv"))
-
-# ## Sample labels
-# labels <- read.csv(file = "data/labels.csv")
-# ## Cleaning sample table
-# samples <-   samples %>%
-#   dplyr::filter(!sample == "") %>% 
-#   dplyr::filter(!glacier == "0") %>% 
-#   dplyr::filter(!year == "") %>%
-#   dplyr::filter(!year == "2") %>%
-#   dplyr::filter(!year == "supr") %>%
-#   dplyr::filter(!year == "????") %>% 
-#   mutate(year = as.numeric(year))
-# samples <- samples[grepl("sample", samples$FUNG02),]
 
 ## Sequence data ####
 ## Fungi
@@ -177,7 +164,7 @@ div.myco.table <- data.frame(Glacier = fung.ecm.div$Glacier, Year = as.numeric(f
                              am.q0 = fung.am.div$Observed, am.q1 = fung.am.div$q1)
 
 ## Environmental data ####
-env.table <- read.csv("data/env.myco.09.02.23.csv") #PS: old div.clim.chem.28.04.csv
+env.table <- read.csv("data/env.myco.09.02.23.csv") #PS: div.clim.chem.01.03.2023.csv
 
 ## Join environmental and diversity data
 full.table <- env.table %>% 

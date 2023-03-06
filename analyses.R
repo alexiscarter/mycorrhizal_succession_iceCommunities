@@ -83,8 +83,7 @@ gdmTab.ecm = gdmTab.ecm[,!(names(gdmTab.ecm) %in% c("s1.Glacier","s2.Glacier"))]
 
 ## GDM
 gdm.ecm <- gdm(data=gdmTab.ecm, geo=T)
-summary(gdm.ecm) # 14.951 deviance explained
-# small differences 15.352
+summary(gdm.ecm) # 15.121 deviance explained
 
 ## Significance testing with all variables (permutation, influence only pvalue estimation)
 gdm.ecm.signif <- gdm.varImp(spTable = gdmTab.ecm, geo=T, fullModelOnly = TRUE, nPerm = 1000, parallel = TRUE)
@@ -117,7 +116,7 @@ gdmTab.am = gdmTab.am[,!(names(gdmTab.am) %in% c("s1.Glacier","s2.Glacier"))]
 
 ## GDM
 gdm.am <- gdm(data=gdmTab.am, geo=T)
-summary(gdm.am) # 17.667% deviance explained
+summary(gdm.am) # 17.661% deviance explained
 
 ## Significance testing with all variables (permutation, influence only pvalue estimation)
 gdm.am.signif <- gdm.varImp(spTable = gdmTab.am, geo=T, fullModelOnly = TRUE, nPerm = 1000, parallel = TRUE)
@@ -129,6 +128,7 @@ imp.am$variables <- rownames(imp.am)
 
 ## Make global table
 imp.all <- rbind(imp.ecm, imp.am)
+#write.csv(imp.all, "myco/myco.imp.perm10000.table.Plot.01.03.csv", row.names = F)
 
 ## Random forest models ####
 # Analyses done on Windows machine
