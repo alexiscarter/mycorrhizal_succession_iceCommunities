@@ -12,15 +12,17 @@ library(ncf)
 ## Load data
 full.table <- read.csv("data/full.table.09.02.23.csv")
 
-# Transformation
+# Transformations
 full.table$sper.q0.s <- scale(full.table$sper.q0)
+full.table$sper.q1.l <- log(full.table$sper.q1)
 full.table$sper.q1.s <- scale(full.table$sper.q1)
 full.table$am.q1.l <- log(full.table$am.q1)
 full.table$ecm.q1.l <- log(full.table$ecm.q1)
 full.table$t.s <- scale(full.table$meanT)
-full.table$twi.s <- scale(log(full.table$twi))
-full.table$ndvi.s <- scale(log(full.table$ndvi))
-full.table$ph2 <- full.table$ph.s^2
+full.table$twi.l <- log(full.table$twi)
+full.table$twi.s <- scale(full.table$twi.l)
+full.table$ndvi.l <- log(full.table$ndvi)
+full.table$ndvi.s <- scale(full.table$ndvi.l)
 
 ## AM-EcM differences
 full.table$diff.sh <- full.table$am.q1.l-full.table$ecm.q1.l
@@ -41,7 +43,7 @@ env.plot <- full.table %>%
   summarise_all(mean) %>% 
   mutate(Glacier = substr(uniqPlot, start = 1, stop = 5)) %>% 
   drop_na()
-  
+
 ## Plant
 sper <- readRDS("data/sper.phy.relax.rds")
 sample_names(sper) <- paste(sample_data(sper)$Glacier, sample_data(sper)$Year, sample_data(sper)$Spot, sep = "_")
@@ -60,7 +62,7 @@ sper.pcoa.load$uniqPlot <- rownames(sper.pcoa.load)
 env.plant.plot <- sper.pcoa.load %>% 
   left_join(env.plot, by = "uniqPlot")
 
-## EcM at the plot level ####
+## EcM at the plot level
 ## Remove samples with no taxa
 fung.ecm <- prune_samples(sample_sums(fung.ecm) > 0, fung.ecm) # 429 samples
 
@@ -93,7 +95,7 @@ imp.ecm <- data.frame(deviance = gdm.ecm.signif[[2]][,1], pvalue = gdm.ecm.signi
                       marker = rep('EcM',length(gdm.ecm.signif[[2]][,1])))
 imp.ecm$variables <- rownames(imp.ecm)
 
-## AM at the plot level ####
+## AM at the plot level
 ## Remove samples with no taxa
 fung.am <- prune_samples(sample_sums(fung.am) > 0, fung.am) # 523 samples
 
@@ -131,19 +133,51 @@ imp.all <- rbind(imp.ecm, imp.am)
 #write.csv(imp.all, "myco/myco.imp.perm10000.table.Plot.01.03.csv", row.names = F)
 
 ## Random forest models ####
-# Analyses done on Windows machine
-library("randomForest")
-library("rfPermute")
+library(rfPermute)
+library(randomForest)
 
-## AM
-rf_am=randomForest(am.q1.l~sper.q1.l+lg_ndvi+lg_time+meanT+lg_twi+lg_n+ph+lg_p+Glacier, data=full, importance=T, localImp=T, ntree = 1000)
-rp_am <- rfPermute(am.q1.l~sper.q1.l+lg_ndvi+lg_time+meanT+lg_twi+lg_n+ph+lg_p+Glacier, ntree = 1000, data=full, nrep = 5000, num.cores = 6)
+## Only account for plots where soil data is available
+full.r <- full.table %>%
+  group_by(uniqPlot) %>%
+  dplyr::select(uniqPlot, am.q1.l, ecm.q1.l, sper.q1.l,ndvi.l,time.log,meanT,twi.l,lg_n,ph,lg_p) %>% 
+  summarise_all(mean) %>% 
+  mutate(Glacier = substr(uniqPlot, start = 1, stop = 5)) %>% 
+  drop_na()
+
+## Final models
+## RF AM
+rf_am=randomForest(am.q1.l~sper.q1.l+ndvi.l+time.log+meanT+twi.l+lg_n+ph+lg_p+Glacier, data=full.r, 
+                   importance=T, 
+                   localImp=T,
+                   mtry = 2,
+                   ntree = 600)
+summary(rf_am)
+
+rp_am <- rfPermute(am.q1.l~sper.q1.l+ndvi.l+time.log+meanT+twi.l+lg_n+ph+lg_p+Glacier, data=full.r, 
+                   ntree = 600, 
+                   num.rep = 5000, 
+                   mtry = 2, 
+                   num.cores = NULL)
 imp.am <- importance(rp_am)
+imp.am <- data.frame(variables = row.names(imp.am), imp.am, myco = rep('AM', 9))
+imp.am <- imp.am[order(imp.am$variables),]
 
-## ECM
-rf_ecm=randomForest(ecm.q1~sper.q1.l+lg_ndvi+lg_time+meanT+lg_twi+lg_n+ph+lg_p+Glacier, data=full, importance=T, localImp=T, ntree = 1000)
-rp_ecm <- rfPermute(ecm.q1~sper.q1.l+lg_ndvi+lg_time+meanT+lg_twi+lg_n+ph+lg_p+Glacier, ntree = 1000, data=full, nrep = 5000, num.cores = 6)
+## RF EcM
+rf_ecm=randomForest(ecm.q1.l~sper.q1.l+ndvi.l+time.log+meanT+twi.l+lg_n+ph+lg_p+Glacier, data=full.r, 
+                    importance=T, 
+                    localImp=T,
+                    mtry = 2,
+                    ntree = 600)
+summary(rf_ecm)
+
+rp_ecm <- rfPermute(ecm.q1.l~sper.q1.l+ndvi.l+time.log+meanT+twi.l+lg_n+ph+lg_p+Glacier, data=full.r, 
+                    ntree = 600, 
+                    num.rep = 5000, 
+                    mtry = 2, 
+                    num.cores = NULL)
 imp.ecm <- importance(rp_ecm)
+imp.ecm <- data.frame(variables = row.names(imp.ecm), imp.ecm, myco = rep('EcM', 9))
+imp.ecm <- imp.ecm[order(imp.ecm$variables),]
 
-
-
+## Merge results
+rf <- rbind(imp.am, imp.ecm)

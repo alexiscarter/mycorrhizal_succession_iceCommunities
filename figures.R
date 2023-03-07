@@ -182,32 +182,29 @@ imp.all.plot %>%
   theme_bw() + theme(panel.grid.major.x = element_blank(), axis.text.x = element_text(angle = -35, vjust = 0.5, hjust=0), plot.title = element_text(hjust = 0.5))
 
 ## Random Forest models ####
-# package not working on my machine yet, ran on PC
-rf<- read.csv("data/rfpermute.csv")
-rf$variables <- ordered(rf$variables, levels = c("Glacier", "Time", "NDVI", "Plant diversity", "Nitrogen", "pH", "Phosphorus", "Temperature", "Wetness"))
+rf$variables <- ordered(rf$variables, levels = c("Glacier", "time.log", "ndvi.l", "sper.q1.l", "lg_n", "ph", "lg_p", "meanT", "twi.l"))
 
-rf$variables <- ordered(rf$variables, levels = c("Glacier", "Time", "NDVI", "Plant diversity", "Nitrogen", "pH", "Phosphorus", "Temperature", "Wetness"))
 rf %>% 
   filter(myco == "AM") %>% 
-  ggplot(aes(x=variables, y = pourc_IncMSE, fill = variables))+
+  ggplot(aes(x=variables, y = X.IncMSE, fill = variables))+
   geom_bar(stat="identity") +
   scale_fill_manual(name = "Variables", values = c('#DDDDDD', '#FFAABB', '#BBCC33',  '#AAAA00', '#00a878', '#EE8866', '#EEDD88', '#99DDFF', '#77AADD'),
                     labels = c("Glacier", "Time", "Productivity", "Plant diversity", "Nitrogen", "pH", "Phosphorus", "Temperature", "Moisture")) +
   scale_x_discrete(labels = c("Glacier", "Time", "Productivity", "Plant diversity", "Nitrogen", "pH", "Phosphorus", "Temperature", "Moisture")) +
   labs(x = 'Drivers of alpha-diversity', y = 'Variable importance (% IncMSE)', title = 'AM fungi') +
-  scale_y_continuous(expand = c(0.01, 0.01), limits = c(0,60), n.breaks = 6) + #, trans = "log10", limits = c(0,60)
-  theme_bw() + theme(axis.text.x = element_text(angle = -70, vjust = 0.5, hjust=0), plot.title = element_text(hjust = 0.5))
+  scale_y_continuous(expand = c(0.01, 0.01), limits = c(0,50), n.breaks = 6) +
+  theme_bw() + theme(panel.grid.major.x = element_blank(), axis.text.x = element_text(angle = -45, vjust = 0.5, hjust=0), plot.title = element_text(hjust = 0.5))
 
 rf %>% 
   filter(myco == "EcM") %>% 
-  ggplot(aes(x=variables, y = pourc_IncMSE, fill = variables))+
+  ggplot(aes(x=variables, y = X.IncMSE, fill = variables))+
   geom_bar(stat="identity") +
   scale_fill_manual(name = "Variables", values = c('#DDDDDD', '#FFAABB', '#BBCC33',  '#AAAA00', '#00a878', '#EE8866', '#EEDD88', '#99DDFF', '#77AADD'),
                     labels = c("Glacier", "Time", "Productivity", "Plant diversity", "Nitrogen", "pH", "Phosphorus", "Temperature", "Moisture")) +
   scale_x_discrete(labels = c("Glacier", "Time", "Productivity", "Plant diversity", "Nitrogen", "pH", "Phosphorus", "Temperature", "Moisture")) +
   labs(x = 'Drivers of alpha-diversity', y = 'Variable importance (% IncMSE)', title = 'EcM fungi') +
-  scale_y_continuous(expand = c(0.01, 0.01), limits = c(0,60), n.breaks = 6) + #, trans = "log10", limits = c(0,60)
-  theme_bw() + theme(axis.text.x = element_text(angle = -45, vjust = 0.5, hjust=0) plot.title = element_text(hjust = 0.5))
+  scale_y_continuous(expand = c(0.01, 0.01), limits = c(0,50), n.breaks = 6) + #, trans = "log10", limits = c(0,60)
+  theme_bw() + theme(panel.grid.major.x = element_blank(), axis.text.x = element_text(angle = -45, vjust = 0.5, hjust=0), plot.title = element_text(hjust = 0.5))
 
 ## Maps ####
 library(rnaturalearth)
