@@ -164,7 +164,7 @@ div.myco.table <- data.frame(Glacier = fung.ecm.div$Glacier, Year = as.numeric(f
                              am.q0 = fung.am.div$Observed, am.q1 = fung.am.div$q1)
 
 ## Environmental data ####
-env.table <- read.csv("data/env.myco.09.02.23.csv") #PS: div.clim.chem.01.03.2023.csv
+env.table <- read.csv("data/env.myco.09.02.23.csv") #PS: based on full div.clim.chem.21.03.2023.csv
 
 ## Join environmental and diversity data
 full.table <- env.table %>% 

@@ -85,7 +85,7 @@ gdmTab.ecm = gdmTab.ecm[,!(names(gdmTab.ecm) %in% c("s1.Glacier","s2.Glacier"))]
 
 ## GDM
 gdm.ecm <- gdm(data=gdmTab.ecm, geo=T)
-summary(gdm.ecm) # 15.121 deviance explained
+summary(gdm.ecm) # 15.248 deviance explained
 
 ## Significance testing with all variables (permutation, influence only pvalue estimation)
 gdm.ecm.signif <- gdm.varImp(spTable = gdmTab.ecm, geo=T, fullModelOnly = TRUE, nPerm = 1000, parallel = TRUE)
@@ -118,7 +118,7 @@ gdmTab.am = gdmTab.am[,!(names(gdmTab.am) %in% c("s1.Glacier","s2.Glacier"))]
 
 ## GDM
 gdm.am <- gdm(data=gdmTab.am, geo=T)
-summary(gdm.am) # 17.661% deviance explained
+summary(gdm.am) # 17.66% deviance explained
 
 ## Significance testing with all variables (permutation, influence only pvalue estimation)
 gdm.am.signif <- gdm.varImp(spTable = gdmTab.am, geo=T, fullModelOnly = TRUE, nPerm = 1000, parallel = TRUE)
@@ -130,7 +130,6 @@ imp.am$variables <- rownames(imp.am)
 
 ## Make global table
 imp.all <- rbind(imp.ecm, imp.am)
-#write.csv(imp.all, "myco/myco.imp.perm10000.table.Plot.01.03.csv", row.names = F)
 
 ## Random forest models ####
 library(rfPermute)
@@ -151,7 +150,7 @@ rf_am=randomForest(am.q1.l~sper.q1.l+ndvi.l+time.log+meanT+twi.l+lg_n+ph+lg_p+Gl
                    localImp=T,
                    mtry = 2,
                    ntree = 600)
-summary(rf_am)
+summary(rf_am) #0.237346 46.99
 
 rp_am <- rfPermute(am.q1.l~sper.q1.l+ndvi.l+time.log+meanT+twi.l+lg_n+ph+lg_p+Glacier, data=full.r, 
                    ntree = 600, 
@@ -168,7 +167,7 @@ rf_ecm=randomForest(ecm.q1.l~sper.q1.l+ndvi.l+time.log+meanT+twi.l+lg_n+ph+lg_p+
                     localImp=T,
                     mtry = 2,
                     ntree = 600)
-summary(rf_ecm)
+summary(rf_ecm) #0.1093399 48.96
 
 rp_ecm <- rfPermute(ecm.q1.l~sper.q1.l+ndvi.l+time.log+meanT+twi.l+lg_n+ph+lg_p+Glacier, data=full.r, 
                     ntree = 600, 
