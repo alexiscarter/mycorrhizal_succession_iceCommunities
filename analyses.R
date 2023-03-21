@@ -131,6 +131,10 @@ imp.am$variables <- rownames(imp.am)
 ## Make global table
 imp.all <- rbind(imp.ecm, imp.am)
 
+imp.all %>%
+  group_by(marker) %>% 
+  summarize(d=sum(deviance))
+
 ## Random forest models ####
 library(rfPermute)
 library(randomForest)
