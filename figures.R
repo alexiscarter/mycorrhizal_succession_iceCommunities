@@ -129,7 +129,7 @@ ggplot(am.melt.div, aes(x=class, y=q0, fill=family_name)) +
   labs(x = 'Time after glacier retreat (years)', y = 'AM fungal richness (q=0)') +
   theme_bw()
 
-##Plot AM-EcM differences
+## Plot AM-EcM differences
 full.table$time.s <- scale(full.table$time)
 full.table$time.log.sc <- scale(log(full.table$time)) 
 marg <- conditional_effects(diff.sh.g)
@@ -145,6 +145,29 @@ ggplot(data = full.table, aes(x=exp(time.log)+0.0000001, y=diff.sh))+ # +0.00000
   scale_y_continuous(expand = c(0.01, 0.01), limits = c(-3,3)) + #, trans = "log10", limits = c(.9,48)
   theme(panel.background = element_blank(), axis.line = element_line(colour = "black",size = .8), axis.ticks = element_line(colour = "black"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         axis.text = element_text(family = 'Helvetica', colour = "black"), text = element_text(family = 'Helvetica', colour = "black"), plot.title = element_text(hjust=0.5))
+
+## Plot probabilities of being present ####
+## AM
+marg <- conditional_effects(am.bern)
+marg.dat <- marg$time.log.sc
+am.bern.plot <- ggplot(data = full.table.pres, aes(x=exp(time.log)+0.0000001, y=pres.am))+ # +0.0000001 is to avoid small misplacement of the bins
+  geom_line(data = marg.dat, aes(x=exp(time.log.sc*attr(full.table$time.log.sc, 'scaled:scale') + attr(full.table$time.log.sc, 'scaled:center')), y=estimate__) ,size=1, alpha = 1) +
+  geom_ribbon(data = marg.dat, aes(x=exp(time.log.sc*attr(full.table$time.log.sc, 'scaled:scale') + attr(full.table$time.log.sc, 'scaled:center')), y=estimate__, ymax=upper__, ymin=lower__), fill="lightblue", alpha=0.5) +
+  labs(title="", x = "Time after glacier retreat (years)", y = "Probability of AM fungi to be present\nin the overall fungal community") +
+  scale_x_continuous(expand = c(0.01, 0.01), trans = "log10", breaks=c(1, 10, 100, 500), limits = c(0.95,NA)) +
+  scale_y_continuous(expand = c(0.01, 0.01), limits = c(0,1)) + #, trans = "log10", limits = c(.9,48)
+  theme_bw()
+
+## EcM
+marg <- conditional_effects(ecm.bern)
+marg.dat <- marg$time.log.sc
+ecm.bern.plot <- ggplot(data = full.table.pres, aes(x=exp(time.log)+0.0000001, y=pres.ecm))+ # +0.0000001 is to avoid small misplacement of the bins
+  geom_line(data = marg.dat, aes(x=exp(time.log.sc*attr(full.table$time.log.sc, 'scaled:scale') + attr(full.table$time.log.sc, 'scaled:center')), y=estimate__) ,size=1, alpha = 1) +
+  geom_ribbon(data = marg.dat, aes(x=exp(time.log.sc*attr(full.table$time.log.sc, 'scaled:scale') + attr(full.table$time.log.sc, 'scaled:center')), y=estimate__, ymax=upper__, ymin=lower__), fill="lightblue", alpha=0.5) +
+  labs(title="", x = "Time after glacier retreat (years)", y = "Probability of EcM fungi to be present\nin the overall fungal community") +
+  scale_x_continuous(expand = c(0.01, 0.01), trans = "log10", breaks=c(1, 10, 100, 500), limits = c(0.95,NA)) +
+  scale_y_continuous(expand = c(0.01, 0.01), limits = c(0,1)) + #, trans = "log10", limits = c(.9,48)
+  theme_bw()
 
 ## GDM plot ####
 ## remove variables with non-significant deviance
@@ -182,15 +205,15 @@ imp.all.plot %>%
   theme_bw() + theme(panel.grid.major.x = element_blank(), axis.text.x = element_text(angle = -35, vjust = 0.5, hjust=0), plot.title = element_text(hjust = 0.5))
 
 ## Random Forest models ####
-rf$variables <- ordered(rf$variables, levels = c("Glacier", "time.log", "ndvi.l", "sper.q1.l", "lg_n", "ph", "lg_p", "meanT", "twi.l"))
+rf$variables <- ordered(rf$variables, levels = c("Glacier", "time.log", "ndvi.l", "sper.q1.l", "AM.reg", "EcM.reg", "lg_n", "ph", "lg_p", "meanT", "twi.l"))
 
 rf %>% 
   filter(myco == "AM") %>% 
   ggplot(aes(x=variables, y = X.IncMSE, fill = variables))+
   geom_bar(stat="identity") +
-  scale_fill_manual(name = "Variables", values = c('#DDDDDD', '#FFAABB', '#BBCC33',  '#AAAA00', '#00a878', '#EE8866', '#EEDD88', '#99DDFF', '#77AADD'),
-                    labels = c("Glacier", "Time", "Productivity", "Plant diversity", "Nitrogen", "pH", "Phosphorus", "Temperature", "Moisture")) +
-  scale_x_discrete(labels = c("Glacier", "Time", "Productivity", "Plant diversity", "Nitrogen", "pH", "Phosphorus", "Temperature", "Moisture")) +
+  scale_fill_manual(name = "Variables", values = c('#DDDDDD', '#FFAABB', '#BBCC33',  '#AAAA00', '#c8faa7', '#00a878', '#EE8866', '#EEDD88', '#99DDFF', '#77AADD'),
+                    labels = c("Glacier", "Time", "Productivity", "Local plant diversity", "Regional AM dominance", "Nitrogen", "pH", "Phosphorus", "Temperature", "Moisture")) +
+  scale_x_discrete(labels = c("Glacier", "Time", "Productivity", "Local plant diversity", "Regional AM dominance", "Nitrogen", "pH", "Phosphorus", "Temperature", "Moisture")) +
   labs(x = 'Drivers of alpha-diversity', y = 'Variable importance (% IncMSE)', title = 'AM fungi') +
   scale_y_continuous(expand = c(0.01, 0.01), limits = c(0,50), n.breaks = 6) +
   theme_bw() + theme(panel.grid.major.x = element_blank(), axis.text.x = element_text(angle = -45, vjust = 0.5, hjust=0), plot.title = element_text(hjust = 0.5))
@@ -199,9 +222,9 @@ rf %>%
   filter(myco == "EcM") %>% 
   ggplot(aes(x=variables, y = X.IncMSE, fill = variables))+
   geom_bar(stat="identity") +
-  scale_fill_manual(name = "Variables", values = c('#DDDDDD', '#FFAABB', '#BBCC33',  '#AAAA00', '#00a878', '#EE8866', '#EEDD88', '#99DDFF', '#77AADD'),
-                    labels = c("Glacier", "Time", "Productivity", "Plant diversity", "Nitrogen", "pH", "Phosphorus", "Temperature", "Moisture")) +
-  scale_x_discrete(labels = c("Glacier", "Time", "Productivity", "Plant diversity", "Nitrogen", "pH", "Phosphorus", "Temperature", "Moisture")) +
+  scale_fill_manual(name = "Variables", values = c('#DDDDDD', '#FFAABB', '#BBCC33', '#AAAA00', '#c8faa7', '#00a878', '#EE8866', '#EEDD88', '#99DDFF', '#77AADD'),
+                    labels = c("Glacier", "Time", "Productivity", "Local plant diversity", "Regional EcM dominance", "Nitrogen", "pH", "Phosphorus", "Temperature", "Moisture")) +
+  scale_x_discrete(labels = c("Glacier", "Time", "Productivity", "Local plant diversity", "Regional EcM dominance", "Nitrogen", "pH", "Phosphorus", "Temperature", "Moisture")) +
   labs(x = 'Drivers of alpha-diversity', y = 'Variable importance (% IncMSE)', title = 'EcM fungi') +
   scale_y_continuous(expand = c(0.01, 0.01), limits = c(0,50), n.breaks = 6) + #, trans = "log10", limits = c(0,60)
   theme_bw() + theme(panel.grid.major.x = element_blank(), axis.text.x = element_text(angle = -45, vjust = 0.5, hjust=0), plot.title = element_text(hjust = 0.5))

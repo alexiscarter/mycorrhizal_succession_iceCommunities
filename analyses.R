@@ -10,7 +10,7 @@ library(gdm)
 library(ncf)
 
 ## Load data
-full.table <- read.csv("data/full.table.09.02.23.csv")
+full.table <- read.csv("data/full.table.07.06.23.csv")
 
 # Transformations
 full.table$sper.q0.s <- scale(full.table$sper.q0)
@@ -24,10 +24,10 @@ full.table$twi.s <- scale(full.table$twi.l)
 full.table$ndvi.l <- log(full.table$ndvi)
 full.table$ndvi.s <- scale(full.table$ndvi.l)
 
-## AM-EcM differences
+## AM-EcM difference
 full.table$diff.sh <- full.table$am.q1.l-full.table$ecm.q1.l
 
-## Modeling differences ####
+## Modeling the AM-EcM difference ####
 diff.sh.g <- brm(formula = diff.sh ~ time.log.sc + (1|Glacier/Year), 
                  data = full.table, family=gaussian(), warmup = 1000, iter = 10000, chains = 4, thin = 10, refresh = 0, silent = TRUE)
 
@@ -142,45 +142,67 @@ library(randomForest)
 ## Only account for plots where soil data is available
 full.r <- full.table %>%
   group_by(uniqPlot) %>%
-  dplyr::select(uniqPlot, am.q1.l, ecm.q1.l, sper.q1.l,ndvi.l,time.log,meanT,twi.l,lg_n,ph,lg_p) %>% 
+  dplyr::select(uniqPlot, am.q1.l, ecm.q1.l, sper.q1.l,ndvi.l,time.log,meanT,twi.l,lg_n,ph,lg_p,AM.reg,EcM.reg) %>% 
   summarise_all(mean) %>% 
   mutate(Glacier = substr(uniqPlot, start = 1, stop = 5)) %>% 
   drop_na()
 
 ## Final models
 ## RF AM
-rf_am=randomForest(am.q1.l~sper.q1.l+ndvi.l+time.log+meanT+twi.l+lg_n+ph+lg_p+Glacier, data=full.r, 
+rf_am=randomForest(am.q1.l~sper.q1.l+ndvi.l+time.log+meanT+twi.l+lg_n+ph+lg_p+Glacier+AM.reg, data=full.r, 
                    importance=T, 
                    localImp=T,
                    mtry = 2,
                    ntree = 600)
 summary(rf_am) #0.237346 46.99
+# 0.2231321 49.37 07/06/2023
 
-rp_am <- rfPermute(am.q1.l~sper.q1.l+ndvi.l+time.log+meanT+twi.l+lg_n+ph+lg_p+Glacier, data=full.r, 
+rp_am <- rfPermute(am.q1.l~sper.q1.l+ndvi.l+time.log+meanT+twi.l+lg_n+ph+lg_p+Glacier+AM.reg, data=full.r, 
                    ntree = 600, 
                    num.rep = 5000, 
                    mtry = 2, 
                    num.cores = NULL)
 imp.am <- importance(rp_am)
-imp.am <- data.frame(variables = row.names(imp.am), imp.am, myco = rep('AM', 9))
+imp.am <- data.frame(variables = row.names(imp.am), imp.am, myco = rep('AM', 10))
 imp.am <- imp.am[order(imp.am$variables),]
 
 ## RF EcM
-rf_ecm=randomForest(ecm.q1.l~sper.q1.l+ndvi.l+time.log+meanT+twi.l+lg_n+ph+lg_p+Glacier, data=full.r, 
+rf_ecm=randomForest(ecm.q1.l~sper.q1.l+ndvi.l+time.log+meanT+twi.l+lg_n+ph+lg_p+Glacier+EcM.reg, data=full.r, 
                     importance=T, 
                     localImp=T,
                     mtry = 2,
                     ntree = 600)
 summary(rf_ecm) #0.1093399 48.96
+# 0.1055756 51.31 07/06/2023
 
-rp_ecm <- rfPermute(ecm.q1.l~sper.q1.l+ndvi.l+time.log+meanT+twi.l+lg_n+ph+lg_p+Glacier, data=full.r, 
+rp_ecm <- rfPermute(ecm.q1.l~sper.q1.l+ndvi.l+time.log+meanT+twi.l+lg_n+ph+lg_p+Glacier+EcM.reg, data=full.r, 
                     ntree = 600, 
                     num.rep = 5000, 
                     mtry = 2, 
                     num.cores = NULL)
 imp.ecm <- importance(rp_ecm)
-imp.ecm <- data.frame(variables = row.names(imp.ecm), imp.ecm, myco = rep('EcM', 9))
+imp.ecm <- data.frame(variables = row.names(imp.ecm), imp.ecm, myco = rep('EcM', 10))
 imp.ecm <- imp.ecm[order(imp.ecm$variables),]
 
 ## Merge results
 rf <- rbind(imp.am, imp.ecm)
+#write.csv(rf, "data/rf.07.06.23.csv", row.names = F)
+
+## Modelling the probability of being present ####
+full.table.pres <- full.table %>%
+  filter(fung.q0 > 0) %>%
+  mutate(pres.am = ifelse(am.q0>0 , 1, 0)) %>%
+  mutate(pres.ecm = ifelse(ecm.q0>0 , 1, 0))
+
+# Fit a Bayesian model using brms with a Bernoulli distribution
+am.bern <- brm(
+  formula = bf(pres.am ~ time.log.sc + (1 | Glacier/Year)),
+  family = bernoulli(link = "logit"),
+  warmup = 1000, iter = 10000, chains = 4, thin = 10, refresh = 0,
+  data = full.table.pres)
+
+ecm.bern <- brm(
+  formula = bf(pres.ecm ~ time.log.sc + (1 | Glacier/Year)),
+  family = bernoulli(link = "logit"),
+  warmup = 1000, iter = 10000, chains = 4, thin = 10, refresh = 0,
+  data = full.table.pres)

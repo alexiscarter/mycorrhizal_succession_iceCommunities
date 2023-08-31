@@ -172,6 +172,15 @@ full.table <- env.table %>%
   left_join(div.table, by = c("Glacier", "Year", "Plot"))
 #write.csv(full.table, "data/full.table.09.02.23.csv", row.names = F)
 
+## Estimated percentage of tree basal area for EcM and AM ####
+# Based on data from Steidinger et al. 2019 10.1038/s41586-019-1128-0
+myc.reg <- read.csv("data/myc.reg.7.06.23.csv")
+
+## Join with main full table
+full.table <- full.table %>% 
+  left_join(myc.reg, by = c("glacier"))
+#write.csv(full.table, "data/full.table.07.06.23.csv", row.names = F)
+
 # Transformations
 full.table$sper.q0.s <- scale(full.table$sper.q0)
 full.table$sper.q1.s <- scale(full.table$sper.q1)
