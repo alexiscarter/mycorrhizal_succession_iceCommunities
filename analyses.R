@@ -8,6 +8,7 @@ library(brms)
 library(performance)
 library(gdm)
 library(ncf)
+library(iml)
 
 ## Load data
 full.table <- read.csv("data/full.table.07.06.23.csv")
@@ -32,7 +33,7 @@ diff.sh.g <- brm(formula = diff.sh ~ time.log.sc + (1|Glacier/Year),
                  data = full.table, family=gaussian(), warmup = 1000, iter = 10000, chains = 4, thin = 10, refresh = 0, silent = TRUE)
 
 ## Check for spatial autocorrelation
-cres = spline.correlog(x = full.table$lat, y = full.table$lon, z = resid(diff.sh.g), resamp = 100)
+cres = spline.correlog(x = full.table$lon, y = full.table$lat, z = resid(diff.sh.g), resamp = 100, latlon = T)
 plot(cres, ylim = c(-1,1)) # No sign spatial autocorrelation
 
 ## GDM ####
@@ -157,6 +158,11 @@ rf_am=randomForest(am.q1.l~sper.q1.l+ndvi.l+time.log+meanT+twi.l+lg_n+ph+lg_p+Gl
 summary(rf_am) #0.237346 46.99
 # 0.2231321 49.37 07/06/2023
 
+# Show direction of the relationships (with partial dependence plot and ice curves)
+pred.am <- Predictor$new(rf_am, data = full.r)
+eff <- FeatureEffect$new(pred.am, feature = "sper.q1.l", method = "pdp+ice", grid.size = 30)
+plot(eff)
+
 rp_am <- rfPermute(am.q1.l~sper.q1.l+ndvi.l+time.log+meanT+twi.l+lg_n+ph+lg_p+Glacier+AM.reg, data=full.r, 
                    ntree = 600, 
                    num.rep = 5000, 
@@ -174,6 +180,11 @@ rf_ecm=randomForest(ecm.q1.l~sper.q1.l+ndvi.l+time.log+meanT+twi.l+lg_n+ph+lg_p+
                     ntree = 600)
 summary(rf_ecm) #0.1093399 48.96
 # 0.1055756 51.31 07/06/2023
+
+# Show direction of the relationships (with partial dependence plot and ice curves)
+pred.ecm <- Predictor$new(rf_ecm, data = full.r)
+eff <- FeatureEffect$new(pred.ecm, feature = "sper.q1.l", method = "pdp+ice", grid.size = 30)
+plot(eff)
 
 rp_ecm <- rfPermute(ecm.q1.l~sper.q1.l+ndvi.l+time.log+meanT+twi.l+lg_n+ph+lg_p+Glacier+EcM.reg, data=full.r, 
                     ntree = 600, 
